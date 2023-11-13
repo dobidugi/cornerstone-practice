@@ -48,7 +48,7 @@ const layers = [
     layerId: "",
     options: {
       visible: true,
-      opacity: 1,
+      opacity: 0.99,
       name: "MRI",
       viewport: {
         colormap: "",
@@ -292,46 +292,61 @@ const Test2 = () => {
     cornerstone.setViewport(viewerRef.current, viewport);
   };
   const onRemove = () => {
-    console.log("aa");
     leftMouseToolChain.forEach((item) => {
       cornerstoneTools.clearToolState(viewerRef.current, item.name);
     });
-    cornerstoneTools.clearToolState(viewerRef.current, "TextMarker");
     cornerstone.updateImage(viewerRef.current);
   };
+
+  const onInvert = () => {
+    const viewport = cornerstone.getViewport(viewerRef.current);
+    viewport.invert = true;
+    cornerstone.setViewport(viewerRef.current, viewport);
+  };
+
+  const onHFlip = () => {
+    const viewport = cornerstone.getViewport(viewerRef.current);
+    viewport.hflip = ~viewport.hflip;
+    cornerstone.setViewport(viewerRef.current, viewport);
+  };
+
+  const onVFlip = () => {
+    const viewport = cornerstone.getViewport(viewerRef.current);
+    viewport.vflip = ~viewport.vflip;
+    cornerstone.setViewport(viewerRef.current, viewport);
+  };
   const onClickRotation = () => {
-    const el = document.getElementById("viewer");
+    // const el = document.getElementById("viewer");
+    // const enel = cornerstone.getEnabrledElement(el);
+    // const context = getNewContext(enel.canvas);
 
-    const enel = cornerstone.getEnabledElement(el);
-    const context = getNewContext(enel.canvas);
+    // draw(context, (context) => {
+    //   context.beginPath(); // Start a new path
+    //   context.moveTo(30, 50); // Move the pen to (30, 50)
+    //   context.lineTo(150, 100); // Draw a line to (150, 100)
+    //   context.stroke(); // Render the path
+    //   // A box with only the color defined
+    //   drawRect(
+    //     context,
+    //     el,
+    //     { x: 10, y: 10 },
+    //     { x: 40, y: 40 },
+    //     { color: "blue" }
+    //   );
 
-    draw(context, (context) => {
-      context.beginPath(); // Start a new path
-      context.moveTo(30, 50); // Move the pen to (30, 50)
-      context.lineTo(150, 100); // Draw a line to (150, 100)
-      context.stroke(); // Render the path
-      // A box with only the color defined
-      drawRect(
-        context,
-        el,
-        { x: 10, y: 10 },
-        { x: 40, y: 40 },
-        { color: "blue" }
-      );
-
-      // Using other options - we can see that lineWidth works but fillStyle does not
-      drawRect(
-        context,
-        el,
-        { x: 20, y: 20 },
-        { x: 50, y: 50 },
-        {
-          lineWidth: 4,
-          color: "green",
-          fillStyle: "pink", // adding fillStyle should cause the box to be filled
-        }
-      );
-    });
+    //   // Using other options - we can see that lineWidth works but fillStyle does not
+    //   drawRect(
+    //     context,
+    //     el,
+    //     { x: 20, y: 20 },
+    //     { x: 50, y: 50 },
+    //     {
+    //       lineWidth: 4,
+    //       color: "green",
+    //       fillStyle: "pink", // adding fillStyle should cause the box to be filled
+    //     }
+    //   );
+    // });
     const viewport = cornerstone.getViewport(viewerRef.current);
     viewport.rotation += 90;
     cornerstone.setViewport(viewerRef.current, viewport);
@@ -380,7 +395,7 @@ const Test2 = () => {
     setColor(color);
   };
 
-  const onShowToolsState = useCallback((event) => {
+  const onShowToolsState = useCallback(() => {
     leftMouseToolChain.forEach((tool) => {
       setToolsState((prev) => {
         const state = cornerstoneTools.getToolState(
@@ -399,7 +414,9 @@ const Test2 = () => {
         return newState;
       });
     });
+    console.log(cornerstoneTools);
   }, []);
+
   const onClickToggleInvert = (event) => {
     const viewport = cornerstone.getViewport(viewerRef.current);
     viewport.invert = !viewport.invert;
@@ -498,6 +515,18 @@ const Test2 = () => {
 
         <button id="showState" onClick={onShowToolsState}>
           show tools state
+        </button>
+
+        <button id="invert" onClick={onInvert}>
+          Invert
+        </button>
+
+        <button id="hFlip" onClick={onHFlip}>
+          hFlip
+        </button>
+
+        <button id="hFlip" onClick={onVFlip}>
+          vFlip
         </button>
 
         <form
