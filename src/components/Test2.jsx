@@ -3,13 +3,16 @@ import { unstable_batchedUpdates } from "react-dom";
 import cornerstone from "cornerstone-core";
 import cornerstoneMath from "cornerstone-math";
 import cornerstoneTools from "cornerstone-tools";
+// import draw from "cornerstone-tools/drawing/draw";
 import cornerstoneWebImageLoader from "cornerstone-web-image-loader";
-const draw = cornerstoneTools.import("drawing/draw");
-const drawRect = cornerstoneTools.importInternal("drawing/drawRect");
-const getNewContext = cornerstoneTools.import("drawing/getNewContext");
 import Hammer from "hammerjs";
 import cornerstoneWADOImageLoader from "cornerstone-wado-image-loader";
 import dicomParser from "dicom-parser";
+
+const draw = cornerstoneTools.import("drawing/draw");
+const drawTextBox = cornerstoneTools.import("drawing/drawTextBox");
+const drawRect = cornerstoneTools.importInternal("drawing/drawRect");
+const getNewContext = cornerstoneTools.import("drawing/getNewContext");
 
 //Configure WADO-URI Loader
 cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
@@ -35,6 +38,8 @@ const mriImages = [
   "dicomweb://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323131.dcm",
 ];
 const segmantationImages = [
+  "dicomweb:https://testdicombucket.s3.us-east-2.amazonaws.com/2a3c96dd-e659-470a-a83f-8c1f52752399.dcm",
+
   // "dicomweb://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323707.dcm",
   // "dicomweb://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323563.dcm",
   //   "dicomweb://raw.githubusercontent.com/ivmartel/dwv/master/tests/data/bbmri-53323419.dcm",
@@ -48,7 +53,7 @@ const layers = [
     layerId: "",
     options: {
       visible: true,
-      opacity: 0.99,
+      opacity: 0.7,
       name: "MRI",
       viewport: {
         colormap: "",
@@ -72,12 +77,7 @@ const layers = [
   //   },
   // },
 ];
-const _conf = {
-  markers: ["F5", "F4", "F3", "F2", "F1"],
-  current: "F5",
-  ascending: true,
-  loop: true,
-};
+
 console.log(cornerstoneTools.ZoomTool);
 const leftMouseToolChain = [
   { name: "Pan", func: cornerstoneTools.PanTool, config: {} },
@@ -102,6 +102,41 @@ const leftMouseToolChain = [
         loop: true,
       },
     },
+  },
+  {
+    name: "EllipticalRoi",
+    func: cornerstoneTools.EllipticalRoiTool,
+    config: {},
+  },
+  {
+    name: "CircleRoi",
+    func: cornerstoneTools.CircleRoiTool,
+    config: {},
+  },
+  {
+    name: "RectangleRoi",
+    func: cornerstoneTools.RectangleRoiTool,
+    config: {},
+  },
+  {
+    name: "Angle",
+    func: cornerstoneTools.AngleTool,
+    config: {},
+  },
+  {
+    name: "DoubleTapFitToWindowTool",
+    func: cornerstoneTools.DoubleTapFitToWindowTool,
+    config: {},
+  },
+  {
+    name: "WwwcRegion",
+    func: cornerstoneTools.WwwcRegionTool,
+    config: {},
+  },
+  {
+    name: "FreehandRoi",
+    func: cornerstoneTools.FreehandRoiTool,
+    config: {},
   },
 ];
 
@@ -161,13 +196,21 @@ const Test2 = () => {
     cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
     cornerstoneWebImageLoader.external.cornerstone = cornerstone;
     cornerstoneTools.external.Hammer = Hammer;
-    cornerstoneTools.toolColors.setToolColor("blue");
-    cornerstoneTools.init({ showSVGCursor: false });
+    cornerstoneTools.toolColors.setToolColor("white");
+    cornerstoneTools.toolColors.setActiveColor("red");
+    // cornerstoneTools.toolColors.setHoverColor("yellow");
+    cornerstoneTools.toolStyle.setToolWidth(2);
+
+    cornerstoneTools.init({ showSVGCursor: true });
+    // cornerstoneTools.setToolsState();
+
     cornerstone.enable(viewerRef.current);
 
     init();
     setTools();
     setEventListeners();
+    drawText();
+
     return () => {
       removeEventListeners();
     };
@@ -277,7 +320,7 @@ const Test2 = () => {
 
         // segmantaion 이미지를 액티브 레이어로 설정한다.
         if (index === 1) {
-          cornerstone.setActiveLayer(viewerRef.current, 0);
+          cornerstone.setActiveLayer(viewerRef.current, layerId);
         }
 
         // Display the first image
@@ -300,7 +343,7 @@ const Test2 = () => {
 
   const onInvert = () => {
     const viewport = cornerstone.getViewport(viewerRef.current);
-    viewport.invert = true;
+    viewport.invert = ~viewport.invert;
     cornerstone.setViewport(viewerRef.current, viewport);
   };
 
@@ -315,38 +358,22 @@ const Test2 = () => {
     viewport.vflip = ~viewport.vflip;
     cornerstone.setViewport(viewerRef.current, viewport);
   };
+
+  const drawText = () => {
+    const el = document.getElementById("viewer");
+    const enel = cornerstone.getEnabledElement(el);
+    cornerstone.draw;
+    const context = getNewContext(enel.canvas);
+    draw(context, (context) => {
+      drawTextBox(context, "TextTest: blujrllru", 0, 0, "yellow", {
+        centering: false,
+      });
+    });
+    // cornerstone.setViewport(viewerRef.current);
+    // cornerstone.updateImage(viewerRef.current);
+  };
+
   const onClickRotation = () => {
-    // const el = document.getElementById("viewer");
-    // const enel = cornerstone.getEnabrledElement(el);
-    // const context = getNewContext(enel.canvas);
-
-    // draw(context, (context) => {
-    //   context.beginPath(); // Start a new path
-    //   context.moveTo(30, 50); // Move the pen to (30, 50)
-    //   context.lineTo(150, 100); // Draw a line to (150, 100)
-    //   context.stroke(); // Render the path
-    //   // A box with only the color defined
-    //   drawRect(
-    //     context,
-    //     el,
-    //     { x: 10, y: 10 },
-    //     { x: 40, y: 40 },
-    //     { color: "blue" }
-    //   );
-
-    //   // Using other options - we can see that lineWidth works but fillStyle does not
-    //   drawRect(
-    //     context,
-    //     el,
-    //     { x: 20, y: 20 },
-    //     { x: 50, y: 50 },
-    //     {
-    //       lineWidth: 4,
-    //       color: "green",
-    //       fillStyle: "pink", // adding fillStyle should cause the box to be filled
-    //     }
-    //   );
-    // });
     const viewport = cornerstone.getViewport(viewerRef.current);
     viewport.rotation += 90;
     cornerstone.setViewport(viewerRef.current, viewport);
@@ -391,35 +418,117 @@ const Test2 = () => {
     const color = event.target.value;
     const layer = cornerstone.getActiveLayer(viewerRef.current);
     layer.viewport.colormap = color;
-    cornerstone.updateImage(viewerRef.current);
     setColor(color);
+    cornerstone.updateImage(viewerRef.current);
   };
 
+  const onLoadToolState = useCallback(() => {
+    console.log("aa");
+    cornerstoneTools.addToolState(viewerRef.current, "Length", {
+      visible: true,
+      active: false,
+      invalidated: false,
+      handles: {
+        start: {
+          x: 103.39740259740262,
+          y: 73.74545454545455,
+          highlight: true,
+          active: false,
+        },
+        end: {
+          x: 127.66753246753245,
+          y: 159.52207792207793,
+          highlight: true,
+          active: false,
+          moving: false,
+        },
+        textBox: {
+          active: false,
+          hasMoved: false,
+          movesIndependently: false,
+          drawnIndependently: true,
+          allowedOutsideImage: true,
+          hasBoundingBox: true,
+          x: 127.66753246753245,
+          y: 159.52207792207793,
+          boundingBox: {
+            width: 76.6943359375,
+            height: 25,
+            left: 712.5,
+            top: 467.3125,
+          },
+        },
+      },
+      uuid: "42bfd96c-be52-415a-a474-b04e0adc3bc6",
+      length: 89.14408741923415,
+      unit: "mm",
+    });
+    cornerstoneTools.addToolState(viewerRef.current, "Length", {
+      visible: true,
+      active: false,
+      invalidated: false,
+      handles: {
+        start: {
+          x: 153.43376623376622,
+          y: 69.02857142857142,
+          highlight: true,
+          active: false,
+        },
+        end: {
+          x: 100.57142857142857,
+          y: 207.33506493506493,
+          highlight: true,
+          active: false,
+          moving: false,
+        },
+        textBox: {
+          active: false,
+          hasMoved: false,
+          movesIndependently: false,
+          drawnIndependently: true,
+          allowedOutsideImage: true,
+          hasBoundingBox: true,
+          x: 153.43376623376622,
+          y: 69.02857142857142,
+          boundingBox: {
+            width: 85.03662109375,
+            height: 25,
+            left: 790,
+            top: 195.125,
+          },
+        },
+      },
+      uuid: "b501263b-51a6-48c8-84cf-366716ee7a0a",
+      length: 148.06455649205427,
+      unit: "mm",
+    });
+    cornerstone.updateImage(viewerRef.current);
+  }, []);
   const onShowToolsState = useCallback(() => {
     leftMouseToolChain.forEach((tool) => {
-      setToolsState((prev) => {
-        const state = cornerstoneTools.getToolState(
-          viewerRef.current,
-          tool.name
-        )?.data;
-        if (state === undefined) return prev;
-        const newState = {
-          ...prev,
-          [tool.name]: cornerstoneTools.getToolState(
-            viewerRef.current,
-            tool.name
-          )?.data,
-        };
-        console.log(newState);
-        return newState;
-      });
+      const state = cornerstoneTools.getToolState(
+        viewerRef.current,
+        tool.name
+      )?.data;
+      if (state === undefined) return;
+      console.log(`${tool.name}`);
+      console.log(cornerstoneTools.getToolState(viewerRef.current, tool.name));
+      // prev.append({
+      //   ...prev,
+      //   [tool.name]: cornerstoneTools.getToolState(viewerRef.current, tool.name)
+      //     ?.data,
+      // });
+
+      // setToolsState((prev) => {
+      //   // return newState;
+      // });
+      // console.log(newState);
     });
-    console.log(cornerstoneTools);
   }, []);
 
   const onClickToggleInvert = (event) => {
     const viewport = cornerstone.getViewport(viewerRef.current);
-    viewport.invert = !viewport.invert;
+    viewport.invert = ~viewport.invert;
     cornerstone.setViewport(viewerRef.current, viewport);
   };
 
@@ -448,14 +557,6 @@ const Test2 = () => {
 
     setLeftMouseTool(toolName);
   };
-
-  // TOOD: html overlay
-  // svg로 도형 그려보기
-  // stack 매니져 써보기
-  // 툴 사용중 다른 툴로 넘어갈 때 angle이 그대로 작동됨 어떻게 해결할까?
-  // 에러, 경고 없애기
-  // 성능 측정
-  // 최종 결과물: viewer 4개가 있고 하나의 viewer (3d rendering)따라서 Reference Lines Tool 기능 사용하기
 
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
@@ -529,6 +630,13 @@ const Test2 = () => {
           vFlip
         </button>
 
+        <button id="loadToolsState" onClick={onLoadToolState}>
+          loadToolState
+        </button>
+
+        <button id="writeText" onClick={drawText}>
+          drawText
+        </button>
         <form
           id="l-mouse-tools"
           ref={leftMouseToolsRef}
